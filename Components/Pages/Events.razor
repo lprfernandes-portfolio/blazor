@@ -1,0 +1,46 @@
+@page "/events"
+@inject EventService EventService
+<PageTitle>Events · EventEase</PageTitle>
+<h1>Upcoming events</h1>
+<p class="muted">Choose an event to see more information and register.</p>
+<div class="toolbar">
+    <label for="event-search">Filter by name or location</label>
+    <input id="event-search" type="search" @bind="search" @bind:event="oninput" placeholder="e.g. Geneva" />
+    <label class="checkbox"><input type="checkbox" @bind="largeSample" /> Show large demo list (1,000 items)</label>
+</div>
+<p class="muted" role="status">@Filtered.Count event(s) shown</p>
+@if (Filtered.Count == 0)
+{
+    <div class="panel">No events match your search.</div>
+}
+else
+{
+    <div class="virtual-list">
+        <Virtualize Items="Filtered" Context="item" ItemSize="195" OverscanCount="3">
+            <div class="virtual-row" @key="item.Id"><EventCard Event="item" /></div>
+        </Virtualize>
+    </div>
+}
+@code {
+    private string search = "";
+    private bool largeSample;
+    private List<EventModel> source = new();
+    protected override void OnInitialized() => source = EventService.GetEvents().ToList();
+    private List<EventModel> Filtered
+    {
+        get
+        {
+            IEnumerable<EventModel> items = source;
+            if (largeSample)
+                items = source.Concat(Enumerable.Range(1, 997).Select(i => new EventModel
+                {
+                    Id = 1000 + i, Name = $"Sample event {i}", Location = i % 2 == 0 ? "Geneva" : "Online",
+                    Date = DateTime.Today.AddDays(1 + (i % 365)), Description = "Performance demo only; registration is not available."
+                }));
+            if (!string.IsNullOrWhiteSpace(search))
+                items = items.Where(e => e.Name.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                    e.Location.Contains(search, StringComparison.OrdinalIgnoreCase));
+            return items.ToList();
+        }
+    }
+}

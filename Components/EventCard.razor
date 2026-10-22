@@ -1,0 +1,26 @@
+<article class="event-card">
+    <div class="eyebrow">EVENT #@Event.Id</div>
+    <h2>@Event.Name</h2>
+    <p><span aria-hidden="true">◷ </span><span class="sr-only">Date: </span>@Event.Date.ToString("dd MMM yyyy")</p>
+    <p><span aria-hidden="true">⌖ </span><span class="sr-only">Location: </span>@Event.Location</p>
+    @if (Editable)
+    {
+        <label for="preview-name-@Event.Id">Quick edit event name</label>
+        <input id="preview-name-@Event.Id" class="input" value="@Event.Name" @onchange="UpdateName" />
+    }
+    <a class="text-link" href="@($"/events/{Event.Id}")" aria-label="Details for @Event.Name">View details →</a>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public EventModel Event { get; set; } = default!;
+    // The editor demonstrates actual two-way component binding via @bind-Event.
+    [Parameter] public EventCallback<EventModel> EventChanged { get; set; }
+    [Parameter] public bool Editable { get; set; }
+
+    private async Task UpdateName(ChangeEventArgs args)
+    {
+        var next = Event.Copy();
+        next.Name = args.Value?.ToString() ?? "";
+        await EventChanged.InvokeAsync(next);
+    }
+}

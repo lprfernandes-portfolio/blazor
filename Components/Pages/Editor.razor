@@ -1,0 +1,53 @@
+@page "/editor"
+@inject EventService EventService
+<PageTitle>Event editor · EventEase</PageTitle>
+<h1>Edit an event</h1>
+<p class="muted">Demonstrates <code>@("@bind-Event")</code> two-way component binding and validated input fields.</p>
+<div class="editor-grid">
+    <div class="panel">
+        <label for="edit-event">Choose an event</label>
+        <select id="edit-event" class="input" @bind="selectedId" @bind:after="Load">
+            @foreach (var e in events) { <option value="@e.Id">@e.Name</option> }
+        </select>
+        @if (model is not null)
+        {
+            <EditForm Model="model" OnValidSubmit="Save" FormName="editEvent">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <label for="event-name">Event name</label>
+                <InputText id="event-name" class="input" @bind-Value="model.Name" />
+                <label for="event-date">Date</label>
+                <InputDate id="event-date" class="input" @bind-Value="model.Date" />
+                <label for="event-location">Location</label>
+                <InputText id="event-location" class="input" @bind-Value="model.Location" />
+                @if (!string.IsNullOrEmpty(error)) { <p class="error" role="alert">@error</p> }
+                @if (saved) { <p class="success" role="status">Changes saved.</p> }
+                <button type="submit" class="button">Save changes</button>
+            </EditForm>
+        }
+    </div>
+    @if (model is not null)
+    {
+        <div><p class="muted">Live preview</p><EventCard @bind-Event="model" Editable="true" /></div>
+    }
+</div>
+@code {
+    private List<EventModel> events = new();
+    private int selectedId;
+    private EventModel? model;
+    private string error = "";
+    private bool saved;
+    protected override void OnInitialized()
+    {
+        events = EventService.GetEvents().ToList();
+        selectedId = events.FirstOrDefault()?.Id ?? 0;
+        Load();
+    }
+    private void Load() { model = EventService.GetEvent(selectedId); error = ""; saved = false; }
+    private void Save()
+    {
+        if (model is null) return;
+        saved = EventService.UpdateEvent(model, out error);
+        if (saved) events = EventService.GetEvents().ToList();
+    }
+}

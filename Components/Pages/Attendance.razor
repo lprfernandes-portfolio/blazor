@@ -1,0 +1,50 @@
+@page "/attendance"
+@inject EventService EventService
+@inject SessionService Session
+<PageTitle>Attendance · EventEase</PageTitle>
+<h1>Attendance tracker</h1>
+<p class="muted">Select an event to view registrations and mark participants as checked in.</p>
+<div class="panel">
+    <label for="selected-event">Event</label>
+    <select id="selected-event" class="input" @bind="selectedId">
+        @foreach (var e in events) { <option value="@e.Id">@e.Name</option> }
+    </select>
+    @if (registrations.Count == 0)
+    {
+        <p>No one has registered for this event yet.</p>
+    }
+    else
+    {
+        <p role="status">@registrations.Count(r => r.CheckedIn) of @registrations.Count checked in</p>
+        <div class="attendance-list">
+            @foreach (var person in registrations)
+            {
+                <div class="attendance-person" @key="person.Email">
+                    <div><strong>@person.Name</strong><div class="muted small">@person.Email</div></div>
+                    <button class="button button-small button-outline" @onclick="() => Toggle(person)">@(person.CheckedIn ? "Check out" : "Check in")</button>
+                </div>
+            }
+        </div>
+    }
+</div>
+@code {
+    private List<EventModel> events = new();
+    private int currentId;
+    private int selectedId { get => currentId; set { currentId = value; Load(); } }
+    private List<Registration> registrations = new();
+    protected override void OnInitialized()
+    {
+        events = EventService.GetEvents().ToList();
+        currentId = events.FirstOrDefault()?.Id ?? 0;
+        Load();
+    }
+    private void Load() => registrations = EventService.GetRegistrations(currentId).ToList();
+    private void Toggle(Registration person)
+    {
+        if (EventService.SetCheckedIn(currentId, person.Email, !person.CheckedIn))
+        {
+            Session.RecordAction();
+            Load();
+        }
+    }
+}

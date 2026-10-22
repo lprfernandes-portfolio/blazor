@@ -1,0 +1,20 @@
+@page "/events/{Id:int}"
+@inject EventService EventService
+<PageTitle>Event details · EventEase</PageTitle>
+@if (eventItem is null)
+{
+    <div class="panel"><h1>Event not found</h1><p>That event ID doesn't exist in the collection.</p><a href="/events">Back to events</a></div>
+}
+else
+{
+    <div class="panel detail"><div class="eyebrow">EVENT DETAILS</div><h1>@eventItem.Name</h1>
+    <p><strong>Date:</strong> @eventItem.Date.ToString("dddd, dd MMMM yyyy")</p>
+    <p><strong>Location:</strong> @eventItem.Location</p>
+    <p>@eventItem.Description</p>
+    <a class="button" href="@($"/register/{eventItem.Id}")">Register for this event →</a></div>
+}
+@code {
+    [Parameter] public int Id { get; set; }
+    private EventModel? eventItem;
+    protected override void OnParametersSet() => eventItem = EventService.GetEvent(Id);
+}

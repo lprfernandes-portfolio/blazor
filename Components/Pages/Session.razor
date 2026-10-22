@@ -1,0 +1,20 @@
+@page "/session"
+@inject SessionService SessionService
+<PageTitle>Session · EventEase</PageTitle>
+<h1>My session</h1>
+<div class="panel">
+@if (SessionService.DisplayName is null)
+{
+    <p>No active registration in this session. Register for an event to see your details here.</p>
+    <a class="button" href="/events">Browse events</a>
+}
+else
+{
+    <p><strong>Name:</strong> @SessionService.DisplayName</p>
+    <p><strong>Email:</strong> @SessionService.Email</p>
+    <p><strong>Actions in this session:</strong> @SessionService.Actions</p>
+    <button class="button button-outline" @onclick="Clear">Clear session</button>
+}
+</div>
+<p class="muted small">This uses a scoped Blazor Server service. It is not a secure login, and may reset on refresh or server reconnection.</p>
+@code { private void Clear() => SessionService.Clear(); }

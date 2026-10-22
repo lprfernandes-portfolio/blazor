@@ -1,0 +1,53 @@
+@page "/register/{Id:int}"
+@inject EventService EventService
+@inject SessionService Session
+<PageTitle>Register · EventEase</PageTitle>
+@if (eventItem is null)
+{
+    <div class="panel"><h1>Event not found</h1><a href="/events">Browse events</a></div>
+}
+else
+{
+    <h1>Register for @eventItem.Name</h1>
+    <div class="panel form-panel">
+        @if (success)
+        {
+            <p class="success" role="status">Registration successful. You're on the list!</p>
+            <a href="/events">Browse more events</a>
+        }
+        else
+        {
+            <EditForm Model="form" OnValidSubmit="Submit" FormName="eventRegistration">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <label for="full-name">Full name</label>
+                <InputText id="full-name" class="input" @bind-Value="form.Name" />
+                <ValidationMessage For="() => form.Name" />
+                <label for="email">Email address</label>
+                <InputText id="email" type="email" class="input" @bind-Value="form.Email" />
+                <ValidationMessage For="() => form.Email" />
+                @if (!string.IsNullOrEmpty(error)) { <p class="error" role="alert">@error</p> }
+                <button type="submit" class="button">Complete registration</button>
+            </EditForm>
+        }
+    </div>
+}
+@code {
+    [Parameter] public int Id { get; set; }
+    private EventModel? eventItem;
+    private Registration form = new();
+    private string error = "";
+    private bool success;
+    protected override void OnParametersSet()
+    {
+        eventItem = EventService.GetEvent(Id);
+        form = new Registration { EventId = Id, Name = Session.DisplayName ?? "", Email = Session.Email ?? "" };
+        error = ""; success = false;
+    }
+    private void Submit()
+    {
+        if (!EventService.Register(Id, form.Name, form.Email, out error)) return;
+        Session.Identify(form.Name.Trim(), form.Email.Trim());
+        success = true;
+    }
+}
